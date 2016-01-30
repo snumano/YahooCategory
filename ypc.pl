@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 
 # created by snumano 2011/06/04
 
@@ -25,13 +25,15 @@ my $today = strftime "%Y%m%d%H%M%S", localtime;
 my $debug = 0;
 my $i = 1;
 
-my @cate_id = ('Society_and_Culture');
+my @cate_id = ('Business_and_Economy');
 my @site_id = ();
 
 my %cate_count;
 my %site_count;
 
-my %site_info = ();
+my %url = ();
+my %site = ();
+my %site_text = ();
 my %category = ();
 
 ### Main ###
@@ -46,39 +48,19 @@ foreach(@cate_id){
     print "CATE No.:".$#cate_id."\n";
     print "SITE No.:".$#site_id."\n";
 
+#    if ($#cate_id > 100){
+#	last;
+#    }
 }
 
-open(OUT,"> ./ypc.csv");
-print OUT encode('utf-8',"No\tID\tCategory\tSite\tURL\tFQDN\tComment\n");
-
+open(OUT,"> ./ypc.csv.${today}");
+print OUT encode('utf-8',"No\tID\tCATEGORY\tSITE_NAME\tURL\tSITE_TEXT\n");
 foreach (@site_id){
-    my $site = '';
-    my $url = '';
-    my $host = '';
-    my $comment = '';
-    my $koushiki_imode = '';
-
-    if($site_info{$_} =~ /(http\:\/\/\S+?)\".+\;\"\>(.+?)\<\/a\>.+abstr\"\>(.+?)\<\/span\>/){
-	$url = $1;
-	$site = $2;
-	$comment = $3;
-	$url =~ s/\%3A/\:/;
-	$url =~ s/\%2F/\//g;
-	if($url =~ /http\:\/\/(.+?)\//){
-	    $host = $1;
-	}
-    }
-#    print Dumper($host);
-
-    print OUT $i."\t".$_."\t".encode('utf-8',$category{$_})."\t".encode('utf-8',$site)."\t".$url."\t".$host."\t".encode('utf-8',$comment)."\n";
+    print OUT $i."\t".$_."\t".encode('utf-8',$category{$_})."\t".encode('utf-8',$site{$_})."\t".$url{$_}."\t".encode('utf-8',$site_text{$_})."\n";
     $i++;
 }
-
 close(OUT);
-
 exit;
-
-
 
 ### サブルーチン ###
 sub analyze_list{
@@ -92,15 +74,15 @@ sub analyze_list{
 
     if($cate_id eq ""){
 	$scraper = scraper {
-	    process '/html/body/div[5]/div/div/div/div/ul/li/span','list[]' => 'HTML';
+	    process '//*/dl/dt','list[]' => 'HTML';
 	};
     }
     else{
 	$scraper = scraper {
-	    process '/html/body/div[5]/div/div/div/div[2]/ul/li/span','list[]' => 'HTML';
-	    process '/html/body/div[5]/div/div/div[3]/ul/li','list2[]' => 'HTML';
-	    process '/html/body/div[4]/h2','cate' => 'TEXT';
-	    process '/html/body/div[4]/h1','cate2' => 'TEXT';
+	    process '//*[@id="deepdir"]/div[1]/ul/li', 'list[]' => 'HTML';
+	    process '//*[@id="rgsite"]/table/tr/td','list2[]' => 'HTML';
+	    process '//*[@id="breadcrumb"]','cate' => 'TEXT';
+	    process '//*[@id="cat_head"]/h1','cate2' => 'TEXT';
 	};
 	
     }
@@ -109,7 +91,7 @@ sub analyze_list{
 
     if($cate_id eq ""){
 	for(my $i=0;;$i++){
-	    if($result->{list}[$i] && $result->{list}[$i] =~ /dir\.yahoo\.co\.jp\/(.+?)\?q\=/){
+	    if($result->{list}[$i] && $result->{list}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)\/\?q\=/){
 #		print Dumper($1);
 		push(@cate_id,$1);
 	    }
@@ -120,9 +102,7 @@ sub analyze_list{
     }
     else{
 	for(my $i=0; ;$i++){
-#	    print "i:".$i."\n";
-#	    print encode('utf-8',$result->{list}[$i])."\n";
-	    if($result->{list}[$i] && $result->{list}[$i] =~ /dir\.yahoo\.co\.jp\/(.+?)\?q\=/){
+	    if($result->{list}[$i] && $result->{list}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)\/\?q\=/){
 		push(@cate_id,$1);
 		print "1.CATE:".$1."\n";
 	    }
@@ -132,23 +112,26 @@ sub analyze_list{
 
 	}
 	for(my $i=0; ;$i++){
-	    if($result->{list2}[$i] && $result->{list2}[$i] =~ /a\shref\=\"(http.+)$/){
-		my $site_info_tmp = $1;
-		if($site_info_tmp =~ /sig\=(\w+?)\&amp/){
-		    my $id = $1;
-#		    print "SITE:".$id."\n";
-		    if($id && !$site_count{$id}){
-			push(@site_id,$id);
-			$site_count{$id}++;
-			
-			$site_info{$id} = $site_info_tmp;
-			$category{$id} = $result->{cate}.$result->{cate2};
-			$category{$id} =~ s/\s//g;
-			
-			print "2.CATE:".encode('utf-8',$category{$id})."\n";			
-			print "2.SITE_ID:".$id."\n";
-			print "2.INFO:".encode('utf-8',$site_info{$id})."\n";
-		    }
+	    if($result->{list2}[$i] && $result->{list2}[$i] =~ /\/RU=(\w+)--\&apos\;\)\;\">(.+)<\/a><\/p><p class=\"site_url\">(.+)<\/p><p class=\"site_text\">\s*(.+)<\/p><p class=\"new_window\">/){
+		my $id        = $1;
+		my $site      = $2;
+		my $url       = $3;
+		my $site_text = $4;
+
+		if($id && !$site_count{$id}){
+		    push(@site_id,$id);
+		    $site_count{$id}++;
+
+                    $url{$id} = $url;
+		    $site{$id} = $site;
+		    
+		    $site_text{$id} = $site_text;
+		    $category{$id} = $result->{cate}.$result->{cate2};
+		    $category{$id} =~ s/\s//g;
+		    
+		    print "2.CATE:".encode('utf-8',$category{$id})."\n";			
+		    print "2.SITE_ID:".$id."\n";
+		    print "2.SITE_TEXT:".encode('utf-8',$site_text{$id})."\n";
 		}
 
 	    }

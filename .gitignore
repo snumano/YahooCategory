@@ -21,6 +21,6 @@ nytprof.out
 *.bs
 /_eumm/
 
-*.csv
+*.csv*
 *~
 
