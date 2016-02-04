@@ -25,7 +25,7 @@ my $today = strftime "%Y%m%d%H%M%S", localtime;
 my $debug = 0;
 my $i = 1;
 
-my @cate_id = ('Business_and_Economy');
+my @cate_id = ('Reference');
 my @site_id = ();
 
 my %cate_count;
@@ -38,7 +38,7 @@ my %category = ();
 
 ### Main ###
 foreach(@cate_id){
-    my (@cate_id_tmp) = &analyze_list($_);
+    my (@cate_id_tmp) = &analyze_list($_, 1);
     foreach(@cate_id_tmp){
 	if(!$cate_count{$_}){
 	    push(@cate_id,$_);
@@ -65,6 +65,7 @@ exit;
 ### サブルーチン ###
 sub analyze_list{
     my $cate_id = $_[0];
+    my $flag = $_[1];
     my $scraper;
     my @cate_id;
 
@@ -79,20 +80,20 @@ sub analyze_list{
     }
     else{
 	$scraper = scraper {
-	    process '//*[@id="deepdir"]/div[1]/ul/li', 'list[]' => 'HTML';
-	    process '//*[@id="rgsite"]/table/tr/td','list2[]' => 'HTML';
+	    process '//*[@id="deepdir"]/div/ul/li', 'list[]' => 'HTML';
+            process '//*[@id="deepdir"]/div/ul/li','list2[]' => '@class';
+	    process '//*[@id="rgsite"]/table/tr/td','list3[]' => 'HTML';
 	    process '//*[@id="breadcrumb"]','cate' => 'TEXT';
 	    process '//*[@id="cat_head"]/h1','cate2' => 'TEXT';
+	    process '//*[@id="wrdflt"]/div[1]/table/tr/td/a','url[]' => '@href';
 	};
 	
-    }
-    
+    }    
     my $result = $scraper->scrape($uri);
 
     if($cate_id eq ""){
 	for(my $i=0;;$i++){
 	    if($result->{list}[$i] && $result->{list}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)\/\?q\=/){
-#		print Dumper($1);
 		push(@cate_id,$1);
 	    }
 	    else{
@@ -100,19 +101,21 @@ sub analyze_list{
 	    }
 	}
     }
+
     else{
 	for(my $i=0; ;$i++){
-	    if($result->{list}[$i] && $result->{list}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)\/\?q\=/){
+	    if($result->{list}[$i] && $result->{list2}[$i] =~ /folder/ && $result->{list}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)\/\?q\=/){
 		push(@cate_id,$1);
-		print "1.CATE:".$1."\n";
+		print "1.CATE:".encode('utf-8',$1)."\n";
 	    }
 	    elsif(!$result->{list}[$i]){
 		last;
 	    }
 
 	}
+
 	for(my $i=0; ;$i++){
-	    if($result->{list2}[$i] && $result->{list2}[$i] =~ /\/RU=(\w+)--\&apos\;\)\;\">(.+)<\/a><\/p><p class=\"site_url\">(.+)<\/p><p class=\"site_text\">\s*(.+)<\/p><p class=\"new_window\">/){
+	    if($result->{list3}[$i] && $result->{list3}[$i] =~ /\/RU=(\w+)-*\&apos\;\)\;\">(.+)<\/a>.*<\/p><p class=\"site_url\">(.+)<\/p><p class=\"site_text\">\s*(.+)<\/p><p class=\"new_window\">/){
 		my $id        = $1;
 		my $site      = $2;
 		my $url       = $3;
@@ -135,10 +138,31 @@ sub analyze_list{
 		}
 
 	    }
-	    elsif(!$result->{list2}[$i]){
+	    elsif(!$result->{list3}[$i]){
+		last;
+	    }
+	}
+
+	for(my $i=0; ;$i++){
+	    print "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n";
+	    if($flag == 1 && $result->{url}[$i] && $result->{url}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)/){
+		print "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n";
+		print $1."\n";
+		my (@cate_id_tmp) = &analyze_list($1, 0);
+		foreach(@cate_id_tmp){
+		    if(!$cate_count{$_}){
+			push(@cate_id,$_);
+			$cate_count{$_}++;
+		    }
+		}
+		print "4.CATE No.:".$#cate_id."\n";
+		print "4.SITE No.:".$#site_id."\n";
+	    }
+	    elsif(!$result->{url}[$i]){
 		last;
 	    }
 	}
     }
     return(@cate_id);
 }
+
