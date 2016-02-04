@@ -86,6 +86,7 @@ sub analyze_list{
 	    process '//*[@id="breadcrumb"]','cate' => 'TEXT';
 	    process '//*[@id="cat_head"]/h1','cate2' => 'TEXT';
 	    process '//*[@id="wrdflt"]/div[1]/table/tr/td/a','url[]' => '@href';
+	    process '//*[@id="wrdflt"]/div[2]/a', 'url2[]' => '@href';
 	};
 	
     }    
@@ -159,6 +160,26 @@ sub analyze_list{
 		print "4.SITE No.:".$#site_id."\n";
 	    }
 	    elsif(!$result->{url}[$i]){
+		last;
+	    }
+	}
+
+	for(my $i=0; ;$i++){
+	    print "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n";
+	    if($flag == 1 && $result->{url2}[$i] && $result->{url2}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)/){
+		print "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n";
+		print $1."\n";
+		my (@cate_id_tmp) = &analyze_list($1, 0);
+		foreach(@cate_id_tmp){
+		    if(!$cate_count{$_}){
+			push(@cate_id,$_);
+			$cate_count{$_}++;
+		    }
+		}
+		print "5.CATE No.:".$#cate_id."\n";
+		print "5.SITE No.:".$#site_id."\n";
+	    }
+	    elsif(!$result->{url2}[$i]){
 		last;
 	    }
 	}
