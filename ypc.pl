@@ -25,7 +25,7 @@ my $today = strftime "%Y%m%d%H%M%S", localtime;
 my $debug = 0;
 my $i = 1;
 
-my @cate_id = ('Reference');
+my @cate_id = ('Arts');
 my @site_id = ();
 
 my %cate_count;
@@ -56,7 +56,7 @@ foreach(@cate_id){
 open(OUT,"> ./ypc.csv.${today}");
 print OUT encode('utf-8',"No\tID\tCATEGORY\tSITE_NAME\tURL\tSITE_TEXT\n");
 foreach (@site_id){
-    print OUT $i."\t".$_."\t".encode('utf-8',$category{$_})."\t".encode('utf-8',$site{$_})."\t".$url{$_}."\t".encode('utf-8',$site_text{$_})."\n";
+    print OUT $i."\t".$_."\t".encode('utf-8',$category{$_})."\t".encode('utf-8',$site{$_})."\t".encode('utf-8',$url{$_})."\t".encode('utf-8',$site_text{$_})."\n";
     $i++;
 }
 close(OUT);
@@ -116,11 +116,11 @@ sub analyze_list{
 	}
 
 	for(my $i=0; ;$i++){
-	    if($result->{list3}[$i] && $result->{list3}[$i] =~ /\/RU=(\w+)-*\&apos\;\)\;\">(.+)<\/a>.*<\/p><p class=\"site_url\">(.+)<\/p><p class=\"site_text\">\s*(.+)<\/p><p class=\"new_window\">/){
+	    if($result->{list3}[$i] && $result->{list3}[$i] =~ /\/RU=(\w+)-*\&apos\;\)\;\">(.+)<\/a>.*<\/p><p class=\"site_url\">(.+?)(<\/p><p class=\"propagation\">.+)?<\/p><p class=\"site_text\">\s*(.+)\s*<\/p><p class=\"new_window\">/){
 		my $id        = $1;
 		my $site      = $2;
 		my $url       = $3;
-		my $site_text = $4;
+		my $site_text = $5;
 
 		if($id && !$site_count{$id}){
 		    push(@site_id,$id);
