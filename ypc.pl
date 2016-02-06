@@ -25,7 +25,7 @@ my $today = strftime "%Y%m%d%H%M%S", localtime;
 my $debug = 0;
 my $i = 1;
 
-my @cate_id = ('Arts');
+my @cate_id = ('Education');
 my @site_id = ();
 
 my %cate_count;
@@ -75,14 +75,14 @@ sub analyze_list{
 
     if($cate_id eq ""){
 	$scraper = scraper {
-	    process '//*/dl/dt','list[]' => 'HTML';
+	    process '//*/dl/dt','folder[]' => 'HTML';
 	};
     }
     else{
 	$scraper = scraper {
-	    process '//*[@id="deepdir"]/div/ul/li', 'list[]' => 'HTML';
-            process '//*[@id="deepdir"]/div/ul/li','list2[]' => '@class';
-	    process '//*[@id="rgsite"]/table/tr/td','list3[]' => 'HTML';
+	    process '//*[@id="deepdir"]/div/ul/li', 'folder[]' => 'HTML';
+            process '//*[@id="deepdir"]/div/ul/li','folder2[]' => '@class';
+	    process '//*[@id="rgsite"]/table/tr','site[]' => 'HTML';
 	    process '//*[@id="breadcrumb"]','cate' => 'TEXT';
 	    process '//*[@id="cat_head"]/h1','cate2' => 'TEXT';
 	    process '//*[@id="wrdflt"]/div[1]/table/tr/td/a','url[]' => '@href';
@@ -94,7 +94,7 @@ sub analyze_list{
 
     if($cate_id eq ""){
 	for(my $i=0;;$i++){
-	    if($result->{list}[$i] && $result->{list}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)\/\?q\=/){
+	    if($result->{folder}[$i] && $result->{folder}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)\/\?q\=/){
 		push(@cate_id,$1);
 	    }
 	    else{
@@ -105,18 +105,18 @@ sub analyze_list{
 
     else{
 	for(my $i=0; ;$i++){
-	    if($result->{list}[$i] && $result->{list2}[$i] =~ /folder/ && $result->{list}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)\/\?q\=/){
+	    if($result->{folder}[$i] && $result->{folder2}[$i] =~ /folder/ && $result->{folder}[$i] =~ /dir\.yahoo\.co\.jp\/(.+)\/\?q\=/){
 		push(@cate_id,$1);
 		print "1.CATE:".encode('utf-8',$1)."\n";
 	    }
-	    elsif(!$result->{list}[$i]){
+	    elsif(!$result->{folder}[$i]){
 		last;
 	    }
 
 	}
 
 	for(my $i=0; ;$i++){
-	    if($result->{list3}[$i] && $result->{list3}[$i] =~ /\/RU=(\w+)-*\&apos\;\)\;\">(.+)<\/a>.*<\/p><p class=\"site_url\">(.+?)(<\/p><p class=\"propagation\">.+)?<\/p><p class=\"site_text\">\s*(.+)\s*<\/p><p class=\"new_window\">/){
+	    if($result->{site}[$i] && $result->{site}[$i] =~ /<a class=\"big\" href=\".*?\" onmousedown=\"return rdsig\(this\,\&apos\;http\:\/\/.+?\/RU=(\w+?)-*?\&apos\;\)\;\">(.+?)<\/a>.*<\/p><p class=\"site_url\">(.+?)(<\/p><p class=\"propagation\">.+)?<\/p><p class=\"site_text\">\s*(.+)\s*<\/p><p class=\"new_window\">/){
 		my $id        = $1;
 		my $site      = $2;
 		my $url       = $3;
@@ -135,11 +135,15 @@ sub analyze_list{
 		    
 		    print "2.CATE:".encode('utf-8',$category{$id})."\n";			
 		    print "2.SITE_ID:".$id."\n";
+		    print "2.SITE:".encode('utf-8',$site{$id})."\n";
 		    print "2.SITE_TEXT:".encode('utf-8',$site_text{$id})."\n";
 		}
-
 	    }
-	    elsif(!$result->{list3}[$i]){
+	    elsif($result->{site}[$i] && $result->{site}[$i] =~ /<p class=\"folder_thumb\">.*href=\"http:\/\/dir\.yahoo\.co\.jp\/(.+)\/\?q\=/){
+                push(@cate_id,$1);
+                print "1.CATE:".encode('utf-8',$1)."\n";
+	    }
+	    elsif(!$result->{site}[$i]){
 		last;
 	    }
 	}
