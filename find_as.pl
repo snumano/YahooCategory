@@ -94,13 +94,12 @@ sub analyze_list{
 	    $host = $line[4];
 	}
 
-	my $global_rank = &alexa($url);
+#	my $global_rank = &alexa($url);
 	($ip,$count_ip,$as_num,$as_company) = &host2as($host);
 
-#	print "$url\t$global_rank\n";
-#	print "$host\t$ip\t$count_ip\t$as_num\t$as_company\t$global_rank\n";
 	chomp($_);
-	print OUT $_."\t$host\t$ip\t$count_ip\t$as_num\t$as_company\t$global_rank\n";
+#	print OUT $_."\t$host\t$ip\t$count_ip\t$as_num\t$as_company\t$global_rank\n";
+	print OUT $_."\t$host\t$ip\t$count_ip\t$as_num\t$as_company\n";
     }
 }
 

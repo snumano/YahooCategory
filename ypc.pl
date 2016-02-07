@@ -25,7 +25,7 @@ my $today = strftime "%Y%m%d%H%M%S", localtime;
 my $debug = 0;
 my $i = 1;
 
-my @cate_id = ('Education');
+my @cate_id = ('Society_and_Culture');
 my @site_id = ();
 
 my %cate_count;
