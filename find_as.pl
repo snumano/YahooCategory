@@ -3,59 +3,20 @@
 #use warnings;
 
 # find AS number
-# created by snumano 2010/11/24
-# revised by snumano 2011/01/28
+# created by snumano 2016/2/7
 
 # CPANより下記ライブラリをinstall
 use Net::DNS;
 use Term::ReadKey;
 use LWP::UserAgent;
 use HTTP::Request;
-#use WWW::Mechanize;
 use Web::Scraper;
 use Jcode;
 use Encode;
-#use DBI;
-#use DBI qw(:utils);
 use POSIX qw(strftime);
 use Data::Dumper;
 
-### init ###
-#my $hosting = "Nippon+RAD+Inc.";
-#my $page;     # 全アプリ表示ページ　カウント用
-#my $max_page = 240; 
-
-#my $flag_page;# 全アプリ表示ページ用flag。ページにアプリ情報が記載されていれば真、情報が記載されていなければ偽とする。
-
-#my ($id,$pw); # ID,PW
-
-=pod
-my @id_list;  # Appli IDを格納するリスト
-my %app_name; # Appli Nameハッシュ配列。Key:Appli ID,Value:Appli Name
-my %category; # Appli Categoryハッシュ配列。Key:Appli ID,Value:Category
-my %category2;
-my %sap;      # SAP名(提供会社)ハッシュ配列。Key:Appli ID,Value:SAP名
-my %user;     # Appli利用者数ハッシュ配列。Key:Appli ID,Value:Appli利用者数
-my %host;     # Host名ハッシュ配列。Key:Appli ID,Value:Host名
-my %addr;     # IP Addressハッシュ配列。Key:Appli ID,IP Address(複数ある場合は1つ目のみ)
-my %count_addr;  # IP Address数ハッシュ配列。Key:Appli ID,Value:IP Address数
-my %company_name;# NW事業者ハッシュ配列。Key:Appli ID,Value:NW事業者
-my %as;       # AS番号ハッシュ配列。Key:Appli ID,Value:AS番号
-my %release_date;
-
-my $key;
-my $i = 1;
-=cut
-
-#my $mech = WWW::Mechanize->new(autocheck => 0);
-#$mech->cookie_jar(HTTP::Cookies->new());
-#$mech->default_header('Accept-Language'=> "en-us,en;q=0.7,ja;q=0.3" );
-#$mech->agent_alias('Linux Mozilla');
-
 my $today = strftime "%Y%m%d%H%M%S", localtime;
-
-#my $debug = 0;
-
 
 # how to use
 unless ($ARGV[0]){
@@ -63,15 +24,12 @@ unless ($ARGV[0]){
     print "find_as.pl <input_file>\n";
 }
 
-
 # Main
 open(OUT,"> ./ASNumber/$ARGV[0]");
-print OUT "No\tID\tCATEGORY\tSITE_NAME\tURL\tSITE_TEXT\tHOST\tIP\tAS_NUMBER\tAS_COMPANY\tALEXA_RANK\n";
+print OUT "id\tyid\tcategory\tsite_name\turl\tsite_text\thost\tip\tcount_ip\tas_number\tas_company\n";
 &analyze_list;
 close(OUT);
-
 exit;
-
 
 ### サブルーチン ###
 sub analyze_list{

@@ -54,7 +54,7 @@ foreach(@cate_id){
 }
 
 open(OUT,"> ./ypc.csv.${today}");
-print OUT encode('utf-8',"No\tID\tCATEGORY\tSITE_NAME\tURL\tSITE_TEXT\n");
+print OUT encode('utf-8',"No\tid\tcategory\tsite_name\turl\tsite_text\n");
 foreach (@site_id){
     print OUT $i."\t".$_."\t".encode('utf-8',$category{$_})."\t".encode('utf-8',$site{$_})."\t".encode('utf-8',$url{$_})."\t".encode('utf-8',$site_text{$_})."\n";
     $i++;
